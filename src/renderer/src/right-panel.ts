@@ -8,10 +8,11 @@
  * 思路来自 Word 的任务窗格：把「边写边要调、边写边要看」的东西放常驻侧栏，
  * 而不是塞进模态对话框（模态框遮住正文，调完才能看效果）。
  */
+import { api } from './api'
 import { el } from './dom'
-import type { Settings } from '@shared/types'
+import type { Settings, Task } from '@shared/types'
 
-export type RightTab = 'outline' | 'tools'
+export type RightTab = 'outline' | 'tools' | 'tasks'
 
 export interface OutlineItem {
   level: number
@@ -72,7 +73,8 @@ export interface RightPanel {
 
 const TABS: Array<{ id: RightTab; label: string }> = [
   { id: 'outline', label: '目录' },
-  { id: 'tools', label: '工具' }
+  { id: 'tools', label: '工具' },
+  { id: 'tasks', label: '任务' }
 ]
 
 export function createRightPanel(options: RightPanelOptions): RightPanel {
@@ -81,6 +83,7 @@ export function createRightPanel(options: RightPanelOptions): RightPanel {
 
   const outlineHost = el('div', { class: 'right-body' })
   const toolsHost = el('div', { class: 'right-body' })
+  const tasksHost = el('div', { class: 'right-body' })
 
   // 工具页三段：排版 / 查找 / 文档库
   const typographySection = el('div', { class: 'right-section' })
@@ -88,7 +91,7 @@ export function createRightPanel(options: RightPanelOptions): RightPanel {
   const librarySection = el('div', { class: 'right-section' })
   toolsHost.append(typographySection, findSection, librarySection)
 
-  const panel = el('aside', { class: 'right-panel' }, [outlineHost, toolsHost])
+  const panel = el('aside', { class: 'right-panel' }, [outlineHost, toolsHost, tasksHost])
 
   function sectionTitle(text: string): HTMLElement {
     return el('div', { class: 'right-section-title', text })
@@ -192,6 +195,121 @@ export function createRightPanel(options: RightPanelOptions): RightPanel {
   findBody.classList.add('right-find-host')
   findSection.append(findBody)
 
+  /* ------------------------------ 任务（类滴答清单） ------------------------------ */
+
+  let tasks: Task[] = []
+  let tasksLoaded = false
+
+  const taskInput = el('input', { class: 'task-input', type: 'text', placeholder: '添加待办…' }) as HTMLInputElement
+  const dueInput = el('input', { class: 'task-date', type: 'date', title: '计划日期（可留空）' }) as HTMLInputElement
+  const listHost = el('div', { class: 'task-list' })
+
+  function todayString(): string {
+    const now = new Date()
+    const pad = (n: number): string => String(n).padStart(2, '0')
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+  }
+
+  function persist(): void {
+    void api.saveTasks(tasks)
+  }
+
+  function addTask(): void {
+    const text = taskInput.value.trim()
+    if (!text) return
+    tasks.unshift({
+      id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+      text,
+      due: dueInput.value || null,
+      done: false,
+      createdAt: Date.now()
+    })
+    taskInput.value = ''
+    persist()
+    renderTasks()
+  }
+
+  const addButton = el('button', { class: 'btn task-add-button', type: 'button', text: '添加', onclick: addTask })
+  taskInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      addTask()
+    }
+    event.stopPropagation()
+  })
+
+  function taskItem(task: Task): HTMLElement {
+    const checkbox = el('input', { type: 'checkbox' }) as HTMLInputElement
+    checkbox.checked = task.done
+    checkbox.addEventListener('change', () => {
+      task.done = checkbox.checked
+      persist()
+      renderTasks()
+    })
+    const row = el('div', { class: `task-item${task.done ? ' done' : ''}` }, [
+      checkbox,
+      el('span', { class: 'task-text', text: task.text, title: task.text })
+    ])
+    if (task.due) {
+      const overdue = !task.done && task.due < todayString()
+      row.append(el('span', { class: `task-due${overdue ? ' overdue' : ''}`, text: task.due.slice(5) }))
+    }
+    row.append(
+      el('button', {
+        class: 'task-del',
+        type: 'button',
+        title: '删除',
+        text: '×',
+        onclick: () => {
+          tasks = tasks.filter((item) => item.id !== task.id)
+          persist()
+          renderTasks()
+        }
+      })
+    )
+    return row
+  }
+
+  function taskGroup(title: string, items: Task[]): void {
+    if (items.length === 0) return
+    listHost.append(el('div', { class: 'right-section-title', text: `${title}（${items.length}）` }))
+    for (const task of items) listHost.append(taskItem(task))
+  }
+
+  function renderTasks(): void {
+    tasksHost.replaceChildren(el('div', { class: 'right-section-title', text: '待办' }))
+    tasksHost.append(el('div', { class: 'task-add' }, [taskInput, dueInput, addButton]))
+    listHost.replaceChildren()
+
+    if (!tasksLoaded) {
+      listHost.append(el('div', { class: 'right-empty', text: '正在读取…' }))
+    } else if (tasks.length === 0) {
+      listHost.append(el('div', { class: 'right-empty', text: '还没有待办。上面输入内容后回车即可添加' }))
+    } else {
+      const today = todayString()
+      const open = tasks.filter((task) => !task.done)
+      // 已排期的按日期排前面（过期的自然排最前），没排期的放后面
+      taskGroup(
+        '今天 / 已过期',
+        open.filter((task) => task.due && task.due <= today).sort((a, b) => String(a.due).localeCompare(String(b.due)))
+      )
+      taskGroup('已排期', open.filter((task) => task.due && task.due > today).sort((a, b) => String(a.due).localeCompare(String(b.due))))
+      taskGroup('未排期', open.filter((task) => !task.due))
+      taskGroup('已完成', tasks.filter((task) => task.done))
+    }
+    tasksHost.append(listHost)
+  }
+
+  async function loadTasks(): Promise<void> {
+    const result = await api.loadTasks()
+    tasks = result.ok ? result.data : []
+    tasksLoaded = true
+    renderTasks()
+  }
+
+  renderTasks()
+  void loadTasks()
+
   /* ------------------------------ 文档库 ------------------------------ */
 
   function renderLibrary(): void {
@@ -230,11 +348,15 @@ export function createRightPanel(options: RightPanelOptions): RightPanel {
     active = tab
     outlineHost.hidden = tab !== 'outline'
     toolsHost.hidden = tab !== 'tools'
+    tasksHost.hidden = tab !== 'tasks'
     for (const button of tabBar?.querySelectorAll('.right-tab') ?? []) {
       button.classList.toggle('active', button.getAttribute('data-tab') === tab)
     }
     if (tab === 'outline') renderOutline()
-    else {
+    else if (tab === 'tasks') {
+      if (!tasksLoaded) void loadTasks()
+      else renderTasks()
+    } else {
       syncValues()
       renderLibrary()
     }
@@ -286,7 +408,11 @@ export function createRightPanel(options: RightPanelOptions): RightPanel {
     refresh() {
       if (panel.hidden) return
       if (active === 'outline') renderOutline()
-      else {
+      else if (active === 'tasks') {
+        // 文稿库换了就重新读一遍待办
+        if (!tasksLoaded) void loadTasks()
+        else renderTasks()
+      } else {
         syncValues()
         renderLibrary()
       }

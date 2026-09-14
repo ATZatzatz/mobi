@@ -354,11 +354,19 @@ html[data-platform='darwin'] .topbar {
   min-height: 0;
 }
 
+/*
+ * 左栏宽度跟着内容走：默认刚好放下最长的一条文件名（再多留一点边距）。
+ * max-content 让它在内容变宽时自动变宽，上限兜住；超过上限文件名就开始省略。
+ * 不做拖拽调宽——它自己会算。
+ */
 .sidebar {
   display: flex;
   flex-direction: column;
-  width: 244px;
-  min-width: 0;
+  /* flex: 0 0 auto 是关键：否则作为 flex 子项会被压缩，撑不到内容的宽度 */
+  flex: 0 0 auto;
+  width: max-content;
+  min-width: 176px;
+  max-width: min(420px, 42vw);
   background: var(--sidebar-bg);
   border-right: 1px solid var(--border);
   overflow: hidden;
@@ -1222,6 +1230,112 @@ body.focus-mode .editor-host {
   padding: 0;
   background: transparent;
   border-bottom: none;
+}
+
+/* ---------------- 任务页（类滴答清单） ---------------- */
+
+.task-add {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.task-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 7px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  outline: none;
+}
+
+.task-input:focus {
+  border-color: var(--accent);
+}
+
+.task-date {
+  flex: 0 0 auto;
+  width: 104px;
+  padding: 3px 5px;
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  outline: none;
+}
+
+.task-add-button {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  font-size: 12.5px;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 4px 4px 6px;
+  border-radius: 5px;
+}
+
+.task-item:hover {
+  background: var(--hover);
+}
+
+.task-item input[type='checkbox'] {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+}
+
+.task-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-item.done .task-text {
+  color: var(--faint);
+  text-decoration: line-through;
+}
+
+.task-due {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--faint);
+}
+
+.task-due.overdue {
+  color: var(--danger);
+}
+
+.task-del {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--faint);
+  opacity: 0;
+}
+
+.task-item:hover .task-del {
+  opacity: 1;
+}
+
+.task-del:hover {
+  color: var(--danger);
 }
 
 /* ---------------- 命令菜单 ---------------- */

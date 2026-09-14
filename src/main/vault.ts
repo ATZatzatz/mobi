@@ -25,7 +25,7 @@ import {
   toRelative
 } from './relpath'
 import { noteSelfWrite } from './watcher'
-import type { DirEntry, ReadResult, SaveResult, StatResult } from '@shared/types'
+import type { DirEntry, ReadResult, SaveResult, StatResult, Task } from '@shared/types'
 
 const TRASH_DIR = 'trash'
 const HISTORY_DIR = 'history'
@@ -269,6 +269,31 @@ export async function trashEntry(rel: string): Promise<{ trashPath: string }> {
 
 export function trashDirPath(): string {
   return metaPath(TRASH_DIR)
+}
+
+/* ------------------------------ 待办清单 ------------------------------ */
+
+const TASKS_FILE = 'tasks.json'
+
+/** 待办存在文稿库里（不是软件设置里），换机器时跟着文稿一起走 */
+export async function readTasks(): Promise<Task[]> {
+  try {
+    const text = await fs.readFile(metaPath(TASKS_FILE), 'utf8')
+    const parsed: unknown = JSON.parse(text)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (item): item is Task =>
+        typeof item === 'object' && item !== null && typeof (item as Task).text === 'string'
+    )
+  } catch {
+    return []
+  }
+}
+
+export async function writeTasks(tasks: Task[]): Promise<void> {
+  await fs.mkdir(metaPath(), { recursive: true })
+  noteSelfWrite(metaPath(TASKS_FILE))
+  await atomicWriteText(metaPath(TASKS_FILE), JSON.stringify(tasks, null, 2))
 }
 
 /** 允许导入的后缀 */

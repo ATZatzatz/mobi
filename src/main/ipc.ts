@@ -17,7 +17,8 @@ import type {
   EntryKind,
   PdfRequest,
   SearchRequest,
-  Settings
+  Settings,
+  Task
 } from '@shared/types'
 
 export interface IpcDeps {
@@ -202,6 +203,13 @@ export function registerIpc(deps: IpcDeps): void {
     const picked = win ? await dialog.showOpenDialog(win, options) : await dialog.showOpenDialog(options)
     const dir = picked.filePaths[0]
     return picked.canceled || !dir ? null : dir
+  })
+
+  ipcMain.handle(CH.tasksLoad, async () => vault.readTasks())
+
+  ipcMain.handle(CH.tasksSave, async (_event, tasks: unknown) => {
+    if (!Array.isArray(tasks)) throw new Error('待办数据格式不对')
+    await vault.writeTasks(tasks as Task[])
   })
 
   ipcMain.handle(CH.confirm, async (_event, request: unknown) => {

@@ -19,6 +19,7 @@ import type {
   SearchResult,
   Settings,
   StatResult,
+  Task,
   WatchPayload,
   WatchStatus
 } from './types'
@@ -71,6 +72,10 @@ export interface MobiApi {
   openSpecial(target: 'trash' | 'data-dir'): Promise<Result<void>>
   /** 选一个目录（导出默认目录 / 备份目录用），取消返回 null */
   chooseDirectory(title?: string): Promise<Result<string | null>>
+  /** 读待办清单 */
+  loadTasks(): Promise<Result<Task[]>>
+  /** 写待办清单 */
+  saveTasks(tasks: Task[]): Promise<Result<void>>
   writeClipboard(text: string): Promise<Result<void>>
 
   notifyReady(): void

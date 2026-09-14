@@ -27,6 +27,7 @@ import type {
   SearchResult,
   Settings,
   StatResult,
+  Task,
   WatchPayload,
   WatchStatus
 } from '@shared/types'
@@ -92,6 +93,8 @@ const api: MobiApi = {
   openExternal: (url: string) => invoke<void>(CH.openExternal, url),
   openSpecial: (target: 'trash' | 'data-dir') => invoke<void>(CH.openSpecial, target),
   chooseDirectory: (title?: string) => invoke<string | null>(CH.chooseDirectory, title),
+  loadTasks: () => invoke<Task[]>(CH.tasksLoad),
+  saveTasks: (tasks: Task[]) => invoke<void>(CH.tasksSave, tasks),
   writeClipboard: (text: string) => invoke<void>(CH.writeClipboard, text),
 
   notifyReady: () => {

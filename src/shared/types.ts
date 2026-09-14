@@ -132,6 +132,16 @@ export interface PdfResult {
   path?: string
 }
 
+/** 一条待办（存在文稿库的 .mobiwriter/tasks.json 里，跟着文稿库走） */
+export interface Task {
+  id: string
+  text: string
+  /** 计划日期 YYYY-MM-DD，没排期就是 null */
+  due: string | null
+  done: boolean
+  createdAt: number
+}
+
 export interface ConfirmRequest {
   title: string
   message: string

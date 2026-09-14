@@ -57,6 +57,10 @@ export const CH = {
   openSpecial: 'shell:open-special',
   /** invoke: 选一个目录（导出目录 / 备份目录用） */
   chooseDirectory: 'dialog:choose-directory',
+  /** invoke: 读待办清单 */
+  tasksLoad: 'tasks:load',
+  /** invoke: 写待办清单 */
+  tasksSave: 'tasks:save',
   /** invoke: 写系统剪贴板 */
   writeClipboard: 'clipboard:write',
 

@@ -53,7 +53,6 @@ const refs = {
   previewHost: byId('preview-host'),
   previewPane: byId('preview-pane'),
   sidebar: byId('sidebar'),
-  splitterLeft: byId('splitter-left'),
   vaultName: byId('vault-name'),
   btnExpandAll: byId<HTMLButtonElement>('btn-expand-all'),
   btnNewFile: byId<HTMLButtonElement>('btn-new-file'),
@@ -815,6 +814,28 @@ function refreshExpandButton(): void {
   refs.btnExpandAll.title = expanded ? '折叠全部目录' : '一键展开整个文档库'
 }
 
+/**
+ * 左栏宽度：刚好放下最长的那条文件名，再留一点余量。
+ *
+ * 为什么用 JS 量而不是 CSS 的 max-content：文件名上有 overflow:hidden/ellipsis，
+ * 它在 max-content 计算里不再贡献文字宽度，侧栏就永远撑不开。
+ * 每次树变化（onTreeChanged）量一次，上限 420px，超过就靠省略号。
+ */
+function fitSidebarWidth(): void {
+  const names = [...refs.treeHost.querySelectorAll('.row .name')] as HTMLElement[]
+  if (names.length === 0) {
+    refs.sidebar.style.width = ''
+    return
+  }
+  let widest = 0
+  for (const name of names) widest = Math.max(widest, name.scrollWidth)
+  const firstRow = refs.treeHost.querySelector('.row') as HTMLElement | null
+  const firstRowName = firstRow?.querySelector('.name') as HTMLElement | null
+  const extras = firstRow && firstRowName ? firstRow.getBoundingClientRect().width - firstRowName.getBoundingClientRect().width : 48
+  const target = Math.ceil(widest + extras + 18)
+  refs.sidebar.style.width = `${Math.min(Math.max(target, 176), 420)}px`
+}
+
 async function toggleExpandAll(): Promise<void> {
   if (!tree || !state.vaultPath) return
   if (tree.isAllExpanded()) {
@@ -1284,37 +1305,6 @@ async function handleMenuAction(action: MenuAction): Promise<void> {
   }
 }
 
-/* ------------------------------ 分隔条 ------------------------------ */
-
-function setupSplitters(): void {
-  let dragging: 'left' | 'right' | null = null
-
-  refs.splitterLeft.addEventListener('mousedown', (event) => {
-    dragging = 'left'
-    event.preventDefault()
-  })
-
-  window.addEventListener('mousemove', (event) => {
-    if (!dragging) return
-    const workspace = refs.previewPane.parentElement
-    if (!workspace) return
-    const rect = workspace.getBoundingClientRect()
-    if (dragging === 'left') {
-      const width = Math.min(Math.max(event.clientX - rect.left, 160), Math.min(560, rect.width - 320))
-      refs.sidebar.style.width = `${width}px`
-    } else {
-      const fromRight = rect.right - event.clientX
-      const width = Math.min(Math.max(fromRight, 220), Math.max(220, rect.width - 320))
-      refs.workspace.style.setProperty('--preview-width', `${width}px`)
-    }
-  })
-
-  window.addEventListener('mouseup', () => {
-    if (!dragging) return
-    dragging = null
-  })
-}
-
 /* ------------------------------ 启动 ------------------------------ */
 
 async function bootstrap(): Promise<void> {
@@ -1358,7 +1348,10 @@ async function bootstrap(): Promise<void> {
     onImportRequest: () => void importMarkdownFiles(),
     onMergeRequest: (files) => void mergeFiles(files),
     onExportMergeRequest: (files) => void exportMergedPdf(files),
-    onTreeChanged: refreshExpandButton,
+    onTreeChanged: () => {
+      refreshExpandButton()
+      fitSidebarWidth()
+    },
     onError: (message) => toast(message, 'error')
   })
 
@@ -1458,7 +1451,6 @@ async function bootstrap(): Promise<void> {
   })
 
   scheduleStats()
-  setupSplitters()
   applyChrome()
   renderAll()
   // 恢复上次的右栏标签页（只在启动时做一次，之后不跟着设置重置）
