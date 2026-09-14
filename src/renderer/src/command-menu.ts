@@ -143,8 +143,10 @@ export function createCommandMenu(anchor: HTMLElement, onRun: (id: string) => vo
     open = true
     panel.hidden = false
 
-    // 贴着菜单按钮下方展开
-    const rect = anchor.getBoundingClientRect()
+    // 贴着菜单按钮展开。按钮每次重渲染都会换掉，所以这里现查一次；
+    // 查不到就退回顶栏（否则会贴到窗口最左边缘，和按钮差一个内边距）
+    const button = anchor.querySelector('button')
+    const rect = (button ?? anchor).getBoundingClientRect()
     panel.style.left = `${Math.round(rect.left)}px`
     panel.style.top = `${Math.round(rect.bottom + 6)}px`
 
