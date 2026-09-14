@@ -34,6 +34,8 @@ import type { IconName } from './icons'
 import { paginate, pageVars } from './paginate'
 import { createListSearch } from './search'
 import type { ListSearch, ListSearchTarget } from './search'
+import { createRightPanel } from './right-panel'
+import type { RightPanel, RightTab } from './right-panel'
 import { changed, onChange, state } from './state'
 import type { DirEntry, MenuAction, Settings, WatchPayload } from '@shared/types'
 
@@ -63,6 +65,7 @@ let tree: TreeHandle | null = null
 let listSearch: ListSearch | null = null
 let findBar: FindBar | null = null
 let commandMenu: CommandMenu | null = null
+let rightPanel: RightPanel | null = null
 /** 顶栏右侧的文稿名。单独持有引用，避免每次打字都重建整个工具栏。 */
 let docChip: HTMLElement | null = null
 
@@ -222,7 +225,17 @@ async function openFileAt(target: ListSearchTarget): Promise<void> {
 
 /** 搜索：统一走查找替换栏，「在列表中搜索」是它的一个勾选项 */
 function openSearch(): void {
-  findBar?.open('find')
+  void openFind('find')
+}
+
+/** 打开查找替换：先确保右栏开着并切到「查找」页 */
+async function openFind(mode: 'find' | 'replace'): Promise<void> {
+  const settings = currentSettings()
+  if (!settings.rightPanelVisible || settings.rightPanelTab !== 'find') {
+    await applySettingsPatch({ rightPanelVisible: true, rightPanelTab: 'find' })
+  }
+  rightPanel?.show('find')
+  findBar?.open(mode)
 }
 
 /** 新建一个不重名的文稿（名字被占了就往后加序号） */
@@ -361,8 +374,8 @@ function showEditorContextMenu(x: number, y: number): void {
   const items: Array<{ label: string; run: () => void } | 'separator'> = [
     { label: '从光标处切分文件', run: () => void splitAtCursor() },
     'separator',
-    { label: '查找', run: () => findBar?.open('find') },
-    { label: '查找并替换', run: () => findBar?.open('replace') },
+    { label: '查找', run: () => void openFind('find') },
+    { label: '查找并替换', run: () => void openFind('replace') },
     'separator',
     {
       label: '全选',
@@ -516,6 +529,7 @@ function scheduleStats(): void {
     statsTimer = null
     latestStats = countText(editor?.getDoc() ?? '')
     renderStatus()
+    rightPanel?.refresh()
   }, 180)
 }
 
@@ -553,19 +567,8 @@ function renderStatus(): void {
   if (state.watchMessage) {
     host.append(el('span', { class: 'status-error', text: state.watchMessage }))
   }
-  // 首行缩进是写作时随手会切的，放在下栏；设置入口也在这（另一个是 Ctrl+,）
+  // 首行缩进/行距这些排版参数现在在右栏的「排版」页里，下栏只留信息和设置入口
   host.append(
-    el(
-      'button',
-      {
-        class: state.settings?.paragraphIndent ? 'status-action active' : 'status-action',
-        type: 'button',
-        title: '正文首行缩进两格（中文文稿习惯）',
-        onclick: () => void toggleSetting('paragraphIndent')
-      },
-      [icon('lines', 13), el('span', { text: '首行缩进' })]
-    ),
-
     el('button', {
       class: 'status-action',
       type: 'button',
@@ -670,6 +673,7 @@ function renderTopbar(): void {
   const pdfBusy = state.pdfBusy
   const previewOn = settings?.previewVisible ?? false
   const sidebarOn = settings?.sidebarVisible ?? true
+  const rightOn = settings?.rightPanelVisible ?? true
   const statusbarOn = settings?.statusbarVisible ?? true
   const focusOn = document.body.classList.contains('focus-mode')
   const linesOn = settings?.showLineNumbers ?? false
@@ -693,10 +697,8 @@ function renderTopbar(): void {
       [icon(name)]
     )
 
-  docChip = el('span', {
-    class: 'doc-chip',
-    text: state.currentRel ? titleOf(state.currentRel) : ''
-  })
+  docChip = null
+  // 文稿名不再放标题栏：窗口标题和下栏路径已经各有一份，标题栏只留菜单 / 模式 / 面板开关 / 窗口按钮
 
   // 顶栏左侧：一个「菜单」按钮，命令都从这里进（不再往设置里塞）
   const menuButton = iconButton('menu', '菜单  Ctrl+K', false, () => commandMenu?.toggle())
@@ -713,12 +715,10 @@ function renderTopbar(): void {
       class: `center-button${previewOn ? ' toggle-on' : ''}`,
       type: 'button',
       title: previewOn ? '切回编辑  Ctrl+Shift+P' : '预览排版效果  Ctrl+Shift+P',
+      'aria-label': previewOn ? '切回编辑' : '预览',
       onclick: () => void toggleSetting('previewVisible')
     },
-    [
-      icon(previewOn ? 'edit' : 'eye', 15),
-      el('span', { text: previewOn ? '编辑' : '预览' })
-    ]
+    [icon(previewOn ? 'edit' : 'eye', 16)]
   )
 
   const exportButton = el(
@@ -727,9 +727,10 @@ function renderTopbar(): void {
       class: 'center-button',
       type: 'button',
       title: '导出 PDF  Ctrl+P',
+      'aria-label': '导出 PDF',
       onclick: () => void exportPdf()
     },
-    [icon('export', 15), el('span', { text: pdfBusy ? '导出中…' : '导出' })]
+    [icon('export', 16)]
   )
   exportButton.disabled = !hasVault || pdfBusy
 
@@ -739,9 +740,11 @@ function renderTopbar(): void {
     menuButton,
     el('div', { class: 'spacer' }),
     el('div', { class: 'topbar-center' }, [modeButton, exportButton]),
-    docChip,
     el('div', { class: 'panel-toggles' }, [
       iconButton('panel-left', '显示 / 隐藏左栏（文稿树）', sidebarOn, () => void togglePanel('sidebar')),
+      iconButton('panel-right', '显示 / 隐藏右栏（目录 / 排版 / 查找 / 文档库）', rightOn, () =>
+        void togglePanel('right')
+      ),
       iconButton('panel-bottom', '显示 / 隐藏下栏（状态栏）', statusbarOn, () => void togglePanel('statusbar'))
     ]),
     // 窗口按钮自己画：系统画的那些不跟页面缩放走，一缩放就和顶栏对不上、很跳。
@@ -765,10 +768,11 @@ function winButton(name: IconName, label: string, run: () => void, extra = ''): 
 }
 
 /** 左栏 / 右栏 / 下栏的开关 */
-async function togglePanel(panel: 'preview' | 'sidebar' | 'statusbar'): Promise<void> {
+async function togglePanel(panel: 'preview' | 'sidebar' | 'statusbar' | 'right'): Promise<void> {
   const settings = currentSettings()
   if (panel === 'preview') await applySettingsPatch({ previewVisible: !settings.previewVisible })
   else if (panel === 'sidebar') await applySettingsPatch({ sidebarVisible: !settings.sidebarVisible })
+  else if (panel === 'right') await applySettingsPatch({ rightPanelVisible: !settings.rightPanelVisible })
   else await applySettingsPatch({ statusbarVisible: !settings.statusbarVisible })
 }
 
@@ -825,6 +829,8 @@ function applyChrome(): void {
   root.setProperty('--preview-line-height', String(settings.previewLineHeight))
   root.setProperty('--preview-para-gap', `${settings.previewParagraphGap}em`)
   root.setProperty('--preview-mark', settings.markColor)
+  // 右栏显隐（只切显隐，不重置标签页，否则调参数时会被弹回目录页）
+  rightPanel?.setVisible(settings.rightPanelVisible)
   root.setProperty('--preview-font-pt', `${settings.previewFontPt}pt`)
   root.setProperty('--preview-indent', settings.paragraphIndent ? '2em' : '0')
   // 分页预览的纸张尺寸
@@ -1214,11 +1220,9 @@ async function handleMenuAction(action: MenuAction): Promise<void> {
       editor?.redo()
       return
     case 'find':
-      findBar?.open('find')
-      return
+      return openFind('find')
     case 'replace':
-      findBar?.open('replace')
-      return
+      return openFind('replace')
     case 'search':
       openSearch()
       return
@@ -1314,7 +1318,7 @@ async function bootstrap(): Promise<void> {
       onDocChange()
     },
     onSaveShortcut: () => void flushSave(),
-    onFindShortcut: (mode) => findBar?.open(mode),
+    onFindShortcut: (mode) => void openFind(mode),
     onCursorMove
   })
 
@@ -1342,7 +1346,25 @@ async function bootstrap(): Promise<void> {
     else void handleMenuAction(id as MenuAction)
   })
 
-  findBar = createFindBar(refs.findHost, () => editor?.view ?? null, {
+  // 右边栏：目录 / 排版 / 查找 / 文档库
+  rightPanel = createRightPanel({
+    findHost: el('div', { class: 'right-find-host' }),
+    onJump: (line) => {
+      editor?.revealPosition(line, 0, 0)
+      editor?.focus()
+    },
+    getOutlineText: () => editor?.getDoc() ?? '',
+    getSettings: () => state.settings,
+    patchSettings: (patch) => void applySettingsPatch(patch),
+    getLibrary: () => ({ current: state.vaultPath, recent: state.settings?.recentVaults ?? [] }),
+    onChooseVault: () => void chooseVault(),
+    onOpenVault: (dir) => void openVaultPath(dir),
+    onTabChange: (tab) => void applySettingsPatch({ rightPanelTab: tab })
+  })
+  refs.workspace.append(rightPanel.element)
+
+  // 查找栏挂在右栏的「查找」页里，不再把编辑区往下挤
+  findBar = createFindBar(rightPanel.findHost, () => editor?.view ?? null, {
     // 勾选「在列表中搜索」时，把关键词同步给左栏列表（替换只作用于当前文稿）
     onListSearch: (query, options) => listSearch?.search(query, options)
   })
@@ -1402,9 +1424,12 @@ async function bootstrap(): Promise<void> {
     if (tree) setDirtyDot(refs.treeHost, state.currentRel, state.dirty)
   })
 
+  scheduleStats()
   setupSplitters()
   applyChrome()
   renderAll()
+  // 恢复上次的右栏标签页（只在启动时做一次，之后不跟着设置重置）
+  rightPanel.show((state.settings?.rightPanelTab ?? 'outline') as RightTab)
 
   if (state.vaultPath) {
     tree.setVault(state.vaultPath)
@@ -1433,10 +1458,10 @@ async function bootstrap(): Promise<void> {
       commandMenu?.toggle()
     } else if (event.key === 'f' || event.key === 'F') {
       event.preventDefault()
-      findBar?.open('find')
+      void openFind('find')
     } else if (event.key === 'h' || event.key === 'H') {
       event.preventDefault()
-      findBar?.open('replace')
+      void openFind('replace')
     } else if (event.key === '=' || event.key === '+') {
       event.preventDefault()
       void zoomByAction('in')

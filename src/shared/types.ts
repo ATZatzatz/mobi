@@ -65,6 +65,10 @@ export interface Settings {
   pdfToc: boolean
   /** 【】标记文字的颜色 */
   markColor: string
+  /** 右栏是否显示 */
+  rightPanelVisible: boolean
+  /** 右栏当前标签页：outline / typography / find / library */
+  rightPanelTab: string
   pdf: PdfOptions
   windowBounds: WindowBounds | null
   /** 上次编辑的文件，用于重启后恢复 */

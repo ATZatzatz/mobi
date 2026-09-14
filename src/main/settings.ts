@@ -37,6 +37,8 @@ export function defaultSettings(): Settings {
     previewPageMode: false,
     pdfToc: true,
     markColor: MARK_COLOR_DEFAULT,
+    rightPanelVisible: true,
+    rightPanelTab: 'outline',
     pdf: {
       pageSize: 'A4',
       marginMm: 20,
@@ -160,6 +162,10 @@ function normalize(raw: unknown): Settings {
     statusbarVisible: pickBoolean(raw.statusbarVisible, fallback.statusbarVisible),
     previewPageMode: pickBoolean(raw.previewPageMode, fallback.previewPageMode),
     markColor: pickColor(raw.markColor, fallback.markColor),
+    rightPanelVisible: pickBoolean(raw.rightPanelVisible, fallback.rightPanelVisible),
+    rightPanelTab: ['outline', 'typography', 'find', 'library'].includes(String(raw.rightPanelTab))
+      ? String(raw.rightPanelTab)
+      : fallback.rightPanelTab,
     pdf: normalizePdf(raw.pdf),
     windowBounds: normalizeBounds(raw.windowBounds),
     lastOpenedFile: pickString(raw.lastOpenedFile, null)
