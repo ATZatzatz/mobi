@@ -701,16 +701,48 @@ function renderTopbar(): void {
   // 顶栏左侧：一个「菜单」按钮，命令都从这里进（不再往设置里塞）
   const menuButton = iconButton('menu', '菜单  Ctrl+K', false, () => commandMenu?.toggle())
 
+  /*
+   * 标题栏正中间两个按钮：
+   * - 编辑 ⇄ 预览：一个按钮切换模式。标签显示"点一下会切到哪"，不会含糊
+   * - 导出：导出当前文稿为 PDF
+   * 预览原来也在右上角的面板开关里，那个位置语义不对（它是换模式，不是显隐面板），已移除。
+   */
+  const modeButton = el(
+    'button',
+    {
+      class: `center-button${previewOn ? ' toggle-on' : ''}`,
+      type: 'button',
+      title: previewOn ? '切回编辑  Ctrl+Shift+P' : '预览排版效果  Ctrl+Shift+P',
+      onclick: () => void toggleSetting('previewVisible')
+    },
+    [
+      icon(previewOn ? 'edit' : 'eye', 15),
+      el('span', { text: previewOn ? '编辑' : '预览' })
+    ]
+  )
+
+  const exportButton = el(
+    'button',
+    {
+      class: 'center-button',
+      type: 'button',
+      title: '导出 PDF  Ctrl+P',
+      onclick: () => void exportPdf()
+    },
+    [icon('export', 15), el('span', { text: pdfBusy ? '导出中…' : '导出' })]
+  )
+  exportButton.disabled = !hasVault || pdfBusy
+
   // 面板开关放在标题栏右侧（类似 VS Code 的布局按钮），窗口按钮更靠右。
   // 注意：前面必须有 spacer 把内容顶到右边，否则所有东西都会挤在左边。
   host.append(
     menuButton,
     el('div', { class: 'spacer' }),
+    el('div', { class: 'topbar-center' }, [modeButton, exportButton]),
     docChip,
     el('div', { class: 'panel-toggles' }, [
       iconButton('panel-left', '显示 / 隐藏左栏（文稿树）', sidebarOn, () => void togglePanel('sidebar')),
-      iconButton('panel-bottom', '显示 / 隐藏下栏（状态栏）', statusbarOn, () => void togglePanel('statusbar')),
-      iconButton('panel-right', '显示 / 隐藏右栏（预览）', previewOn, () => void togglePanel('preview'))
+      iconButton('panel-bottom', '显示 / 隐藏下栏（状态栏）', statusbarOn, () => void togglePanel('statusbar'))
     ]),
     // 窗口按钮自己画：系统画的那些不跟页面缩放走，一缩放就和顶栏对不上、很跳。
     // 自己画就永远和顶栏在同一个缩放体系里。
