@@ -212,6 +212,7 @@ export type MenuAction =
   | 'zoom-in'
   | 'zoom-out'
   | 'zoom-reset'
+  | 'open-command-menu'
   | 'toggle-sidebar'
   | 'toggle-statusbar'
   | 'toggle-preview'

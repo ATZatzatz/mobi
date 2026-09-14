@@ -967,6 +967,99 @@ body.focus-mode .editor-host {
   color: var(--md-marker);
 }
 
+/* ---------------- 命令菜单 ---------------- */
+
+.command-menu {
+  position: fixed;
+  z-index: 60;
+  width: 288px;
+  max-height: 68vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgb(60 45 30 / 16%);
+}
+
+.command-menu-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.command-menu-icon {
+  display: flex;
+  color: var(--faint);
+}
+
+.command-menu-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--fg);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.command-menu-list {
+  flex: 1;
+  overflow: auto;
+  padding: 5px;
+}
+
+.command-menu-group {
+  padding: 7px 8px 3px;
+  font-size: 11px;
+  color: var(--faint);
+}
+
+.command-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 5px;
+  font-size: 13px;
+  text-align: left;
+}
+
+.command-menu-item.active {
+  background: var(--accent-soft);
+}
+
+.command-menu-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-menu-accel {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--faint);
+}
+
+.command-menu-sep {
+  height: 1px;
+  margin: 5px 4px;
+  background: var(--border);
+}
+
+.command-menu-empty {
+  padding: 16px 8px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--faint);
+}
+
 /* ---------------- 全局搜索 ---------------- */
 
 .search-backdrop {

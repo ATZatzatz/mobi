@@ -26,6 +26,7 @@ export type IconName =
   | 'collapse-all'
   | 'import'
   | 'search'
+  | 'menu'
   | 'arrow-up'
   | 'arrow-down'
   | 'close'
@@ -63,6 +64,7 @@ const PATHS: Record<IconName, string> = {
   import:
     '<path d="M12 3.6v10.2"/><path d="M8 10.2l4 3.8 4-3.8"/><path d="M4.5 16.4v2.4a1.6 1.6 0 0 0 1.6 1.6h11.8a1.6 1.6 0 0 0 1.6-1.6v-2.4"/>',
   search: '<circle cx="10.8" cy="10.8" r="6.4"/><path d="M15.5 15.5L20.4 20.4"/>',
+  menu: '<path d="M4.6 7h14.8M4.6 12h14.8M4.6 17h14.8"/>',
   'arrow-up': '<path d="M12 19.4V5.2"/><path d="M6.6 10.6L12 5.2l5.4 5.4"/>',
   'arrow-down': '<path d="M12 4.6v14.2"/><path d="M17.4 13.4L12 18.8l-5.4-5.4"/>',
   close: '<path d="M6.4 6.4l11.2 11.2M17.6 6.4L6.4 17.6"/>',

@@ -24,6 +24,8 @@ import {
   rewriteRelativeUrls
 } from './preview'
 import type { TextStats } from './preview'
+import { createCommandMenu } from './command-menu'
+import type { CommandMenu } from './command-menu'
 import { openSettingsDialog, promptText } from './dialog'
 import { createFindBar } from './find-bar'
 import type { FindBar } from './find-bar'
@@ -60,6 +62,7 @@ let editor: EditorHandle | null = null
 let tree: TreeHandle | null = null
 let listSearch: ListSearch | null = null
 let findBar: FindBar | null = null
+let commandMenu: CommandMenu | null = null
 /** 顶栏右侧的文稿名。单独持有引用，避免每次打字都重建整个工具栏。 */
 let docChip: HTMLElement | null = null
 
@@ -695,9 +698,13 @@ function renderTopbar(): void {
     text: state.currentRel ? titleOf(state.currentRel) : ''
   })
 
+  // 顶栏左侧：一个「菜单」按钮，命令都从这里进（不再往设置里塞）
+  const menuButton = iconButton('menu', '菜单  Ctrl+K', false, () => commandMenu?.toggle())
+
   // 面板开关放在标题栏右侧（类似 VS Code 的布局按钮），窗口按钮更靠右。
   // 注意：前面必须有 spacer 把内容顶到右边，否则所有东西都会挤在左边。
   host.append(
+    menuButton,
     el('div', { class: 'spacer' }),
     docChip,
     el('div', { class: 'panel-toggles' }, [
@@ -958,12 +965,7 @@ async function openSettings(): Promise<void> {
       version: state.version,
       onBackup: backupNow,
       zoomLevel: settings.zoomLevel,
-      onZoom: zoomBy,
-      onCommand: (action) => {
-        // 顶栏那排按钮搬进设置面板了，这里统一转发
-        if (action === 'import-files') void importMarkdownFiles()
-        else void handleMenuAction(action as MenuAction)
-      }
+      onZoom: zoomBy
     }
   )
   if (!result) return
@@ -1211,6 +1213,9 @@ async function handleMenuAction(action: MenuAction): Promise<void> {
       return toggleTheme()
     case 'open-settings':
       return openSettings()
+    case 'open-command-menu':
+      commandMenu?.toggle()
+      return
   }
 }
 
@@ -1299,6 +1304,12 @@ async function bootstrap(): Promise<void> {
     onError: (message) => toast(message, 'error')
   })
 
+  // 菜单锚在顶栏上（顶栏是常驻元素，而里面的按钮每次重渲染都会换掉）
+  commandMenu = createCommandMenu(refs.topbar, (id) => {
+    if (id === 'import-files') void importMarkdownFiles()
+    else void handleMenuAction(id as MenuAction)
+  })
+
   findBar = createFindBar(refs.findHost, () => editor?.view ?? null, {
     // 勾选「在列表中搜索」时，把关键词同步给左栏列表（替换只作用于当前文稿）
     onListSearch: (query, options) => listSearch?.search(query, options)
@@ -1385,6 +1396,9 @@ async function bootstrap(): Promise<void> {
     if (event.key === ',') {
       event.preventDefault()
       void openSettings()
+    } else if (event.key === 'k' || event.key === 'K') {
+      event.preventDefault()
+      commandMenu?.toggle()
     } else if (event.key === 'f' || event.key === 'F') {
       event.preventDefault()
       findBar?.open('find')

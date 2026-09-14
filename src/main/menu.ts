@@ -67,10 +67,12 @@ export function buildMenu(window: BrowserWindow): void {
       { role: 'paste', label: '粘贴' },
       { role: 'selectAll', label: '全选' },
       { type: 'separator' },
+      { type: 'separator' },
       { label: '查找', accelerator: 'CmdOrCtrl+F', click: send('find') },
       { label: '查找并替换', accelerator: 'CmdOrCtrl+H', click: send('replace') },
       { type: 'separator' },
-      { label: '全局搜索（整个文档库）', accelerator: 'CmdOrCtrl+Shift+F', click: send('search') }
+      { label: '全局搜索（整个文档库）', accelerator: 'CmdOrCtrl+Shift+F', click: send('search') },
+      { label: '命令菜单', accelerator: 'CmdOrCtrl+K', click: send('open-command-menu') }
     ]
   }
 

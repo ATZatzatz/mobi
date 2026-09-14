@@ -122,26 +122,7 @@ export interface SettingsDialogOptions {
   zoomLevel?: number
   /** 点缩放按钮时执行，返回新的级别 */
   onZoom?: (action: 'in' | 'out' | 'reset') => Promise<number>
-  /** 面板里的操作按钮（顶栏那排按钮都搬到这里了） */
-  onCommand?: (action: string) => void
 }
-
-/** 原来在顶栏那一排小按钮，现在都放在设置面板的「操作」一节里 */
-const COMMANDS: Array<{ action: string; label: string }> = [
-  { action: 'open-vault', label: '打开文件夹' },
-  { action: 'search', label: '搜索文稿' },
-  { action: 'new-file', label: '新建文稿' },
-  { action: 'new-folder', label: '新建文件夹' },
-  { action: 'import-files', label: '导入 Markdown' },
-  { action: 'save', label: '保存' },
-  { action: 'export-pdf', label: '导出 PDF' },
-  { action: 'toggle-preview', label: '编辑 / 预览' },
-  { action: 'toggle-focus', label: '专注模式' },
-  { action: 'toggle-line-numbers', label: '行号开关' },
-  { action: 'toggle-theme', label: '深浅主题' },
-  { action: 'toggle-sidebar', label: '左栏开关' },
-  { action: 'toggle-statusbar', label: '下栏开关' }
-]
 
 export function openSettingsDialog(
   current: SettingsDialogResult,
@@ -285,27 +266,6 @@ export function openSettingsDialog(
       el('div', { class: 'modal-form' }, [
         el('div', { class: 'modal-title', text: '设置' }),
 
-        // 顶栏那排小按钮集中到这里
-        el('div', { class: 'modal-subtitle', text: '操作' }),
-        el(
-          'div',
-          { class: 'command-grid' },
-          COMMANDS.map((command) =>
-            el('button', {
-              class: 'btn command-btn',
-              type: 'button',
-              text: command.label,
-              'data-command': command.action,
-              onclick: () => {
-                const run = options.onCommand
-                finish(null)
-                run?.(command.action)
-              }
-            })
-          )
-        ),
-
-        el('div', { class: 'modal-sep' }),
         el('div', { class: 'modal-subtitle', text: '写作' }),
         row('自动保存延迟（毫秒）', autosave, '停止输入多久后写盘。默认 1500，越小越安全，但会产生更多次磁盘写入。'),
         row('显示行号', lineNumbers),
