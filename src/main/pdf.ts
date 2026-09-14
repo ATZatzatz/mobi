@@ -133,7 +133,8 @@ export async function exportPdf(parent: BrowserWindow | null, request: PdfReques
   const dialogOptions = {
     title: '导出 PDF',
     defaultPath: join(
-      request.docDirAbs || app.getPath('documents'),
+      // 优先用设置里的默认导出目录，其次文档所在目录，最后系统文档目录
+      request.defaultDir || request.docDirAbs || app.getPath('documents'),
       `${sanitizeFileName(request.baseName)}.pdf`
     ),
     filters: [{ name: 'PDF 文档', extensions: ['pdf'] }]

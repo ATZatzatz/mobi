@@ -35,6 +35,8 @@ export const CH = {
   searchRun: 'search:run',
   /** invoke: 一键备份整个文档库 */
   backupLibrary: 'backup:run',
+  /** invoke: 备份到指定目录（一键备份按钮用） */
+  backupTo: 'backup:to',
   /** invoke: 界面缩放 */
   zoom: 'ui:zoom',
   /** invoke: 窗口按钮（最小化 / 最大化 / 关闭） */
@@ -53,6 +55,8 @@ export const CH = {
   openExternal: 'shell:open-external',
   /** invoke: 打开回收站 / 数据目录这类特殊位置 */
   openSpecial: 'shell:open-special',
+  /** invoke: 选一个目录（导出目录 / 备份目录用） */
+  chooseDirectory: 'dialog:choose-directory',
   /** invoke: 写系统剪贴板 */
   writeClipboard: 'clipboard:write',
 

@@ -39,6 +39,9 @@ export function defaultSettings(): Settings {
     markColor: MARK_COLOR_DEFAULT,
     rightPanelVisible: true,
     rightPanelTab: 'outline',
+    outlineMaxLevel: 6,
+    exportDir: null,
+    backupDir: null,
     pdf: {
       pageSize: 'A4',
       marginMm: 20,
@@ -163,9 +166,12 @@ function normalize(raw: unknown): Settings {
     previewPageMode: pickBoolean(raw.previewPageMode, fallback.previewPageMode),
     markColor: pickColor(raw.markColor, fallback.markColor),
     rightPanelVisible: pickBoolean(raw.rightPanelVisible, fallback.rightPanelVisible),
-    rightPanelTab: ['outline', 'typography', 'find', 'library'].includes(String(raw.rightPanelTab))
+    rightPanelTab: ['outline', 'tools'].includes(String(raw.rightPanelTab))
       ? String(raw.rightPanelTab)
       : fallback.rightPanelTab,
+    outlineMaxLevel: pickNumber(raw.outlineMaxLevel, 1, 6, fallback.outlineMaxLevel),
+    exportDir: pickString(raw.exportDir, null),
+    backupDir: pickString(raw.backupDir, null),
     pdf: normalizePdf(raw.pdf),
     windowBounds: normalizeBounds(raw.windowBounds),
     lastOpenedFile: pickString(raw.lastOpenedFile, null)

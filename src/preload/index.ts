@@ -81,6 +81,7 @@ const api: MobiApi = {
   importFiles: (dirRel: string) => invoke<ImportResult>(CH.importFiles, dirRel),
   search: (request: SearchRequest) => invoke<SearchResult>(CH.searchRun, request),
   backupLibrary: () => invoke<BackupResult | null>(CH.backupLibrary),
+  backupLibraryTo: (dir: string) => invoke<BackupResult>(CH.backupTo, dir),
   zoom: (action: 'in' | 'out' | 'reset') => invoke<number>(CH.zoom, action),
   windowControl: (action: 'minimize' | 'maximize' | 'close') => invoke<void>(CH.windowControl, action),
 
@@ -90,6 +91,7 @@ const api: MobiApi = {
   confirm: (request: ConfirmRequest) => invoke<boolean>(CH.confirm, request),
   openExternal: (url: string) => invoke<void>(CH.openExternal, url),
   openSpecial: (target: 'trash' | 'data-dir') => invoke<void>(CH.openSpecial, target),
+  chooseDirectory: (title?: string) => invoke<string | null>(CH.chooseDirectory, title),
   writeClipboard: (text: string) => invoke<void>(CH.writeClipboard, text),
 
   notifyReady: () => {

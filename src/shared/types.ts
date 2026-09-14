@@ -67,8 +67,14 @@ export interface Settings {
   markColor: string
   /** 右栏是否显示 */
   rightPanelVisible: boolean
-  /** 右栏当前标签页：outline / typography / find / library */
+  /** 右栏当前标签页：outline / tools */
   rightPanelTab: string
+  /** 目录页最多显示到第几级标题 */
+  outlineMaxLevel: number
+  /** 默认导出目录（导出 PDF 时优先用它） */
+  exportDir: string | null
+  /** 备份目录（设了之后标题栏的备份按钮就是一键备份） */
+  backupDir: string | null
   pdf: PdfOptions
   windowBounds: WindowBounds | null
   /** 上次编辑的文件，用于重启后恢复 */
@@ -117,6 +123,8 @@ export interface PdfRequest {
   options: PdfOptions
   /** 页面已经在渲染层分好了：打印时页边距设 0、不要页眉页脚，才能一张纸对一页 */
   exactPages?: boolean
+  /** 默认保存目录（设置里的默认导出目录） */
+  defaultDir?: string | null
 }
 
 export interface PdfResult {

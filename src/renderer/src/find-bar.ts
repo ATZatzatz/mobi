@@ -182,7 +182,12 @@ export function createFindBar(
     pushListSearch()
   })
 
-  const closeButton = iconButton('close', '关闭（Esc）', () => close())
+  const clearButton = iconButton('close', '清空关键词', () => {
+    searchInput.value = ''
+    replaceInput.value = ''
+    applyQuery()
+    searchInput.focus()
+  })
 
   const findRow = el('div', { class: 'find-row' }, [
     searchInput,
@@ -193,7 +198,7 @@ export function createFindBar(
     regexpToggle,
     wordToggle,
     listToggle,
-    closeButton
+    clearButton
   ])
 
   const replaceRow = el('div', { class: 'find-row find-replace-row', hidden: true }, [
@@ -212,7 +217,8 @@ export function createFindBar(
     })
   ])
 
-  const bar = el('div', { class: 'find-bar', hidden: true }, [findRow, replaceRow])
+  // 查找栏现在常驻在右栏的「工具」页里（由标签页控制显隐），自己不隐藏
+  const bar = el('div', { class: 'find-bar' }, [findRow, replaceRow])
   host.append(bar)
 
   searchInput.addEventListener('input', schedule)
@@ -249,7 +255,6 @@ export function createFindBar(
   function close(): void {
     if (!open) return
     open = false
-    bar.hidden = true
     barOptions.onListSearch?.(null, { caseSensitive })
     getView()?.focus()
   }
@@ -257,7 +262,6 @@ export function createFindBar(
   return {
     open(mode) {
       open = true
-      bar.hidden = false
       replaceRow.hidden = mode !== 'replace'
       const target = mode === 'replace' ? replaceInput : searchInput
       target.focus()

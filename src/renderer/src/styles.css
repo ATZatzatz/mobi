@@ -1148,13 +1148,14 @@ body.focus-mode .editor-host {
   color: var(--faint);
 }
 
-/* 目录项 */
+/* 目录项：层级引导线 + 层级缩进，一眼看出从属关系 */
 .outline-item {
+  position: relative;
   display: block;
   width: 100%;
   padding: 4px 6px;
   font-size: 12.5px;
-  color: var(--fg);
+  color: var(--muted);
   text-align: left;
   border-radius: 5px;
   overflow: hidden;
@@ -1162,8 +1163,51 @@ body.focus-mode .editor-host {
   white-space: nowrap;
 }
 
+.outline-item.lv1 {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.outline-item.lv2 {
+  font-weight: 500;
+  color: var(--fg);
+}
+
+/* 每一级画一条竖线，标出它从属于谁 */
+.outline-item.lv2::before,
+.outline-item.lv3::before,
+.outline-item.lv4::before,
+.outline-item.lv5::before,
+.outline-item.lv6::before {
+  content: '';
+  position: absolute;
+  left: var(--guide, 15px);
+  top: 3px;
+  bottom: 3px;
+  border-left: 1px solid var(--border-strong);
+}
+
 .outline-item:hover {
   background: var(--hover);
+}
+
+/* 工具页里的三段 */
+.right-section + .right-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.right-section-title {
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: var(--faint);
+  letter-spacing: 0.04em;
+}
+
+.context-item.active {
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .outline-text {

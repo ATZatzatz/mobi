@@ -54,6 +54,8 @@ export interface MobiApi {
   search(request: SearchRequest): Promise<Result<SearchResult>>
   /** 一键备份：选一个目录，把整个文档库复制过去（带时间戳） */
   backupLibrary(): Promise<Result<BackupResult | null>>
+  /** 备份到指定目录（一键备份按钮用；不弹选择框） */
+  backupLibraryTo(dir: string): Promise<Result<BackupResult>>
   /** 界面缩放，返回新的缩放级别 */
   zoom(action: 'in' | 'out' | 'reset'): Promise<Result<number>>
   /** 自绘的窗口按钮 */
@@ -67,6 +69,8 @@ export interface MobiApi {
   openExternal(url: string): Promise<Result<void>>
   /** target: 'trash' 回收站 | 'data-dir' 设置与日志所在目录 */
   openSpecial(target: 'trash' | 'data-dir'): Promise<Result<void>>
+  /** 选一个目录（导出默认目录 / 备份目录用），取消返回 null */
+  chooseDirectory(title?: string): Promise<Result<string | null>>
   writeClipboard(text: string): Promise<Result<void>>
 
   notifyReady(): void

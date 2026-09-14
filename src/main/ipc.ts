@@ -188,6 +188,22 @@ export function registerIpc(deps: IpcDeps): void {
     } else if (action === 'close') win.close()
   })
 
+  ipcMain.handle(CH.backupTo, async (_event, dir: unknown) => {
+    return backupLibrary(assertString(dir, 'dir'))
+  })
+
+  ipcMain.handle(CH.chooseDirectory, async (_event, title: unknown) => {
+    const options: OpenDialogOptions = {
+      title: typeof title === 'string' && title ? title : '选择目录',
+      buttonLabel: '就用这个目录',
+      properties: ['openDirectory', 'createDirectory']
+    }
+    const win = deps.getWindow()
+    const picked = win ? await dialog.showOpenDialog(win, options) : await dialog.showOpenDialog(options)
+    const dir = picked.filePaths[0]
+    return picked.canceled || !dir ? null : dir
+  })
+
   ipcMain.handle(CH.confirm, async (_event, request: unknown) => {
     const payload = request as ConfirmRequest
     const options: MessageBoxOptions = {

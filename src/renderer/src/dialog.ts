@@ -105,6 +105,8 @@ export interface SettingsDialogResult {
   previewFontPt: number
   paragraphIndent: boolean
   pdfToc: boolean
+  exportDir: string | null
+  backupDir: string | null
   editorLineHeight: number
   previewLineHeight: number
   previewParagraphGap: number
@@ -172,6 +174,28 @@ export function openSettingsDialog(
     const toc = el('input', { type: 'checkbox' })
     toc.checked = current.pdfToc
     toc.dataset['field'] = 'pdfToc'
+
+    // 两个目录选择：默认导出目录 / 备份目录
+    let exportDir = current.exportDir
+    let backupDir = current.backupDir
+    const exportDirText = el('div', { class: 'right-path', text: exportDir ?? '（未设置，导出时每次询问）', title: exportDir ?? '' })
+    const backupDirText = el('div', { class: 'right-path', text: backupDir ?? '（未设置，一键备份时会先让你选一次）', title: backupDir ?? '' })
+    const dirRow = (label: string, text: HTMLElement, title: string, apply: (dir: string) => void): HTMLElement => {
+      const pick = el('button', {
+        class: 'btn',
+        type: 'button',
+        text: '选择…',
+        onclick: async () => {
+          const result = await api.chooseDirectory(title)
+          if (!result.ok || result.data === null) return
+          apply(result.data)
+        }
+      })
+      return el('div', { class: 'modal-row' }, [
+        el('div', { class: 'modal-row-main' }, [el('label', { class: 'modal-row-label', text: label }), pick]),
+        text
+      ])
+    }
     editorLineHeight.dataset['field'] = 'editorLineHeight'
     previewLineHeight.dataset['field'] = 'previewLineHeight'
     paragraphGap.dataset['field'] = 'paragraphGap'
@@ -306,6 +330,11 @@ export function openSettingsDialog(
         row('显示页码', pageNumbers),
         row('打印背景色', printBackground, '关闭后标题底色、代码块背景不会出现在 PDF 里。'),
         row('生成目录', toc, '开启预览分页后有效：自动在最前面加一页目录，页码按实际排版算出来。'),
+        dirRow('默认导出目录', exportDirText, '选择默认导出目录', (dir) => {
+          exportDir = dir
+          exportDirText.textContent = dir
+          exportDirText.title = dir
+        }),
 
         el('div', { class: 'modal-sep' }),
         el('div', { class: 'modal-subtitle', text: '备份' }),
@@ -316,6 +345,11 @@ export function openSettingsDialog(
             text: '备份是在你选的位置新建一个带时间戳的文件夹，里面是普通的文稿文件夹，可以直接被网盘同步。不含回收站和历史快照。'
           })
         ]),
+        dirRow('默认备份目录', backupDirText, '选择默认备份目录', (dir) => {
+          backupDir = dir
+          backupDirText.textContent = dir
+          backupDirText.title = dir
+        }),
 
         el('div', { class: 'modal-sep' }),
         el('div', { class: 'modal-foot' }, [
@@ -354,6 +388,8 @@ export function openSettingsDialog(
               previewFontPt: Number(fontPt.value) || TYPOGRAPHY_DEFAULTS.previewFontPt,
               paragraphIndent: indent.checked,
               pdfToc: toc.checked,
+              exportDir,
+              backupDir,
               editorLineHeight: Number(editorLineHeight.value) || TYPOGRAPHY_DEFAULTS.editorLineHeight,
               previewLineHeight: Number(previewLineHeight.value) || TYPOGRAPHY_DEFAULTS.previewLineHeight,
               previewParagraphGap: Number.isFinite(Number(paragraphGap.value))

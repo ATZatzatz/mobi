@@ -228,13 +228,13 @@ function openSearch(): void {
   void openFind('find')
 }
 
-/** 打开查找替换：先确保右栏开着并切到「查找」页 */
+/** 打开查找替换：先确保右栏开着并切到「工具」页（查找栏常驻在那里） */
 async function openFind(mode: 'find' | 'replace'): Promise<void> {
   const settings = currentSettings()
-  if (!settings.rightPanelVisible || settings.rightPanelTab !== 'find') {
-    await applySettingsPatch({ rightPanelVisible: true, rightPanelTab: 'find' })
+  if (!settings.rightPanelVisible || settings.rightPanelTab !== 'tools') {
+    await applySettingsPatch({ rightPanelVisible: true, rightPanelTab: 'tools' })
   }
-  rightPanel?.show('find')
+  rightPanel?.show('tools')
   findBar?.open(mode)
 }
 
@@ -353,6 +353,7 @@ async function exportMergedPdf(files: string[]): Promise<void> {
         html,
         docDirAbs: docDirAbs(first) ?? '',
         baseName: files.length === 1 ? titleOf(first) : `${titleOf(first)}_等${files.length}篇`,
+      defaultDir: settings.exportDir,
         options: settings.pdf,
         exactPages: paginated !== null
       })
@@ -736,10 +737,24 @@ function renderTopbar(): void {
 
   // 面板开关放在标题栏右侧（类似 VS Code 的布局按钮），窗口按钮更靠右。
   // 注意：前面必须有 spacer 把内容顶到右边，否则所有东西都会挤在左边。
+  // 一键备份：目录在设置里设过就直接备，没设过就先让选一个
+  const backupButton = el(
+    'button',
+    {
+      class: 'center-button',
+      type: 'button',
+      title: '一键备份到设置的目录（未设置会先让你选）',
+      'aria-label': '一键备份',
+      onclick: () => void backupNow()
+    },
+    [icon('save', 16)]
+  )
+  backupButton.disabled = !hasVault
+
   host.append(
     menuButton,
     el('div', { class: 'spacer' }),
-    el('div', { class: 'topbar-center' }, [modeButton, exportButton]),
+    el('div', { class: 'topbar-center' }, [modeButton, exportButton, backupButton]),
     el('div', { class: 'panel-toggles' }, [
       iconButton('panel-left', '显示 / 隐藏左栏（文稿树）', sidebarOn, () => void togglePanel('sidebar')),
       iconButton('panel-right', '显示 / 隐藏右栏（目录 / 排版 / 查找 / 文档库）', rightOn, () =>
@@ -933,19 +948,29 @@ async function toggleTheme(): Promise<void> {
   await applySettingsPatch({ theme: settings.theme === 'dark' ? 'light' : 'dark' })
 }
 
-/** 一键备份：整个文档库复制到指定位置（带时间戳，可以是网盘同步目录） */
+/** 一键备份：整个文档库复制到设置里的备份目录（未设置则先选一次并记住） */
 async function backupNow(): Promise<void> {
   if (!state.vaultPath) {
     toast('先打开文档库', 'info')
     return
   }
+  let dest = currentSettings().backupDir
+  if (!dest) {
+    const picked = await api.chooseDirectory('选择备份目录')
+    if (!picked.ok) {
+      toast(picked.error, 'error')
+      return
+    }
+    if (picked.data === null) return
+    dest = picked.data
+    await applySettingsPatch({ backupDir: dest })
+  }
   toast('正在备份，文档多的话会慢一点…', 'info')
-  const result = await api.backupLibrary()
+  const result = await api.backupLibraryTo(dest)
   if (!result.ok) {
     toast(`备份失败：${result.error}`, 'error')
     return
   }
-  if (result.data === null) return
   const { destination, files, bytes } = result.data
   toast(`已备份 ${files} 个文件（${formatBytes(bytes)}）：${destination}`, 'success')
 }
@@ -991,6 +1016,8 @@ async function openSettings(): Promise<void> {
       previewFontPt: settings.previewFontPt,
       paragraphIndent: settings.paragraphIndent,
       pdfToc: settings.pdfToc,
+      exportDir: settings.exportDir,
+      backupDir: settings.backupDir,
       editorLineHeight: settings.editorLineHeight,
       previewLineHeight: settings.previewLineHeight,
       previewParagraphGap: settings.previewParagraphGap,
@@ -1017,6 +1044,8 @@ async function openSettings(): Promise<void> {
     previewFontPt: result.previewFontPt,
     paragraphIndent: result.paragraphIndent,
     pdfToc: result.pdfToc,
+    exportDir: result.exportDir,
+    backupDir: result.backupDir,
     editorLineHeight: result.editorLineHeight,
     previewLineHeight: result.previewLineHeight,
     previewParagraphGap: result.previewParagraphGap,
@@ -1359,7 +1388,11 @@ async function bootstrap(): Promise<void> {
     getLibrary: () => ({ current: state.vaultPath, recent: state.settings?.recentVaults ?? [] }),
     onChooseVault: () => void chooseVault(),
     onOpenVault: (dir) => void openVaultPath(dir),
-    onTabChange: (tab) => void applySettingsPatch({ rightPanelTab: tab })
+    onTabChange: (tab) => {
+      // 进「工具」页就把查找栏就绪（它常驻在这一页里，平时不能是空白）
+      if (tab === 'tools') findBar?.open('find')
+      void applySettingsPatch({ rightPanelTab: tab })
+    }
   })
   refs.workspace.append(rightPanel.element)
 
