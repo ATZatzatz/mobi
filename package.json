@@ -1,0 +1,39 @@
+{
+  "name": "mobiwriter",
+  "productName": "MobiWriter",
+  "version": "0.3.0",
+  "description": "简洁、稳定、可自由修改的 Markdown 长文写作工具（Electron + CodeMirror 6）",
+  "main": "./out/main/index.js",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs dev",
+    "app": "node scripts/dev.mjs preview",
+    "preview": "node scripts/dev.mjs preview",
+    "build": "electron-vite build",
+    "typecheck": "tsc --noEmit",
+    "dist": "npm run build && electron-builder --win --publish never",
+    "dist:dir": "npm run build && electron-builder --win --dir --publish never"
+  },
+  "devDependencies": {
+    "@codemirror/autocomplete": "^6.0.0",
+    "@codemirror/commands": "^6.0.0",
+    "@codemirror/lang-markdown": "^6.5.2",
+    "@codemirror/language": "^6.0.0",
+    "@codemirror/search": "^6.0.0",
+    "@codemirror/state": "^6.0.0",
+    "@codemirror/view": "^6.0.0",
+    "@lezer/highlight": "^1.2.3",
+    "@types/node": "^22.10.0",
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
+    "highlight.js": "^11.12.0",
+    "markdown-it": "^15.0.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.0.0"
+  }
+}

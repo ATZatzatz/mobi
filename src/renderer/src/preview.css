@@ -1,0 +1,309 @@
+/**
+ * 预览区（以及导出 PDF）的 Markdown 排版样式。
+ *
+ * 这个文件有两份用途：
+ * 1. 正常 import，给应用里的预览栏用；
+ * 2. 以 ?raw 方式读成字符串，内联进导出 PDF 的独立 HTML。
+ *
+ * 所以这里的颜色一律写成 var(--xxx, 浅色兜底值)：
+ * 应用里由 styles.css 提供深色覆盖，导出时没有 styles.css，就自动用浅色兜底，
+ * 保证导出的 PDF 永远是白底黑字，不会因为当前是深色主题而印出一片黑。
+ */
+
+.markdown-body {
+  --preview-font-size: var(--preview-font-pt, 12pt);
+  font-family: var(--preview-font, 'MiSans', 'Microsoft YaHei', 'PingFang SC', sans-serif);
+  font-size: var(--preview-font-pt, 12pt);
+  /* 行距可在设置里调，默认 1.85 */
+  line-height: var(--preview-line-height, 1.85);
+  letter-spacing: 0.012em;
+  color: var(--preview-fg, #2f2c29);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/*
+ * 中文文稿里有序列表习惯写成「1、2、3、」而不是「1. 2. 3.」。
+ * 用 @counter-style 自定义标记后缀，这样 <ol start="3"> 依然有效，
+ * 嵌套列表也会各自重新计数（css 计数器做不到这点）。
+ */
+@counter-style cjk-ordered {
+  system: numeric;
+  symbols: '0' '1' '2' '3' '4' '5' '6' '7' '8' '9';
+  suffix: '、';
+}
+
+.markdown-body ol {
+  list-style-type: cjk-ordered;
+}
+
+.markdown-body > *:first-child { margin-top: 0; }
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin: 1.6em 0 0.6em;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--preview-heading, #1f2328);
+}
+
+.markdown-body h1 {
+  font-size: 1.85em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--preview-border, #e3e6ea);
+}
+
+.markdown-body h2 {
+  font-size: 1.5em;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--preview-border, #e3e6ea);
+}
+
+.markdown-body h3 { font-size: 1.25em; }
+.markdown-body h4 { font-size: 1.1em; }
+.markdown-body h5 { font-size: 1em; }
+.markdown-body h6 { font-size: 0.95em; color: var(--preview-muted, #6a737d); }
+
+/*
+ * 自定义居中标题：`#@ 标题`
+ * 居中标题自带下边框会很怪，所以去掉边框。
+ */
+.markdown-body .md-center {
+  text-align: center;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.markdown-body p {
+  margin: 0 0 var(--preview-para-gap, 1em);
+  /* 中文文稿习惯：正文段落首行缩进两格，由设置里的开关控制（默认关） */
+  text-indent: var(--preview-indent, 0);
+}
+
+.markdown-body a {
+  color: var(--preview-link, #0a58ca);
+  text-decoration: none;
+}
+
+.markdown-body a:hover { text-decoration: underline; }
+
+.markdown-body strong { font-weight: 700; }
+
+.markdown-body em { font-style: italic; }
+
+.markdown-body del { text-decoration: line-through; color: var(--preview-muted, #6a737d); }
+
+.markdown-body hr {
+  height: 1px;
+  margin: 2em 0;
+  border: 0;
+  background: var(--preview-border, #e3e6ea);
+}
+
+.markdown-body blockquote {
+  margin: 0 0 var(--preview-para-gap, 1em);
+  padding: 0.2em 1em;
+  color: var(--preview-muted, #6a737d);
+  border-left: 3px solid var(--preview-border-strong, #d0d7de);
+}
+
+.markdown-body blockquote > *:last-child { margin-bottom: 0; }
+
+.markdown-body ul,
+.markdown-body ol {
+  margin: 0 0 1em;
+  padding-left: 1.6em;
+}
+
+/*
+ * 【文字】标记：颜色由 --preview-mark 决定，默认朱砂红
+ */
+.markdown-body .md-mark {
+  color: var(--preview-mark, #c0392b);
+}
+
+/* ---------- 分页预览（按纸张大小）---------- */
+
+.md-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 26px 0 60px;
+}
+
+.md-page {
+  position: relative;
+  box-sizing: border-box;
+  width: var(--page-width, 210mm);
+  height: var(--page-height, 297mm);
+  padding: var(--page-margin, 20mm);
+  background: #ffffff;
+}
+
+/* 屏幕上的纸感：投影 + 细边；打印文档里不会被应用（那边没有 .preview-host） */
+.preview-host .md-page {
+  box-shadow: 0 2px 10px rgb(60 45 30 / 14%);
+  outline: 1px solid var(--border);
+}
+
+.md-page-body {
+  width: 100%;
+  color: var(--preview-fg, #2f2c29);
+}
+
+.md-page-no {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6mm;
+  text-align: center;
+  font-size: 10.5px;
+  color: #9a938a;
+}
+
+/* 分页用的离屏量尺：必须真的参与布局才量得到高度，所以只是挪到屏幕外 */
+.md-measure-sandbox {
+  position: fixed;
+  left: -20000px;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ---------- 目录（导出 PDF 时可选）---------- */
+
+.md-toc-title {
+  margin: 0 0 1.2em;
+  font-size: 1.6em;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: none;
+  text-indent: 0;
+}
+
+.md-toc-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0.4em 0;
+  font-size: 0.95em;
+  text-indent: 0;
+}
+
+.md-toc-item .md-toc-dots {
+  flex: 1;
+  border-bottom: 1px dotted var(--preview-border-strong, #d0d7de);
+  transform: translateY(-0.25em);
+}
+
+.md-toc-item .md-toc-page {
+  flex: 0 0 auto;
+  color: var(--preview-muted, #6a737d);
+}
+
+.md-toc-item.lv2 { padding-left: 1.4em; }
+.md-toc-item.lv3 { padding-left: 2.8em; }
+.md-toc-item.lv4,
+.md-toc-item.lv5,
+.md-toc-item.lv6 { padding-left: 4.2em; }
+
+/* 列表项不要吃段落间距，保持紧凑 */
+.markdown-body li { margin: 0.25em 0; }
+.markdown-body li > ul,
+.markdown-body li > ol { margin: 0.25em 0; }
+
+.markdown-body li input[type='checkbox'] { margin-right: 0.4em; }
+
+.markdown-body code {
+  padding: 0.15em 0.35em;
+  font-family: var(--mono-font, "Cascadia Mono", Consolas, "Courier New", monospace);
+  font-size: 0.9em;
+  background: var(--preview-code-bg, #f2f3f5);
+  border-radius: 4px;
+  color: var(--preview-code-fg, #b03060);
+}
+
+.markdown-body pre {
+  margin: 0 0 1em;
+  padding: 14px 16px;
+  overflow: auto;
+  background: var(--preview-pre-bg, #f6f8fa);
+  border: 1px solid var(--preview-border, #e3e6ea);
+  border-radius: 6px;
+}
+
+.markdown-body pre code {
+  padding: 0;
+  background: none;
+  color: var(--preview-fg, #1f2328);
+  font-size: 0.875em;
+  line-height: 1.6;
+}
+
+.markdown-body table {
+  width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+.markdown-body th,
+.markdown-body td {
+  padding: 8px 12px;
+  border: 1px solid var(--preview-border, #e3e6ea);
+  text-align: left;
+}
+
+.markdown-body th {
+  background: var(--preview-th-bg, #f6f8fa);
+  font-weight: 600;
+}
+
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.markdown-body figure { margin: 0 0 1em; }
+
+/* highlight.js 常用 token，同样走变量 + 浅色兜底 */
+.hljs-comment,
+.hljs-quote { color: var(--hl-comment, #6a737d); font-style: italic; }
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-doctag,
+.hljs-name { color: var(--hl-keyword, #d73a49); }
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-attribute,
+.hljs-meta .hljs-string { color: var(--hl-string, #032f62); }
+.hljs-number,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-type,
+.hljs-selector-attr,
+.hljs-selector-pseudo { color: var(--hl-number, #005cc5); }
+.hljs-title,
+.hljs-title.function_,
+.hljs-title.class_ { color: var(--hl-title, #6f42c1); }
+.hljs-attr,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-params { color: var(--hl-attr, #e36209); }
+.hljs-tag { color: var(--hl-tag, #22863a); }
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link { color: var(--hl-symbol, #005cc5); }
+.hljs-deletion { color: var(--hl-deletion, #b31d28); background: var(--hl-deletion-bg, #ffeef0); }
+.hljs-addition { background: var(--hl-addition-bg, #f0fff4); }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 700; }

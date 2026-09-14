@@ -1,0 +1,25 @@
+appId: com.mobiwriter.app
+productName: MobiWriter
+copyright: Copyright © 2026
+directories:
+  output: release
+files:
+  - out/**
+  - package.json
+# 字体要解包成真实文件：导出 PDF 时 Chromium 的字体加载走 file:// 协议，
+# 放在 asar 里虽然也能读，但解包后更稳，也方便用户自己替换字体。
+asarUnpack:
+  - out/renderer/fonts/**
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: ${productName}-${version}-${arch}.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: 墨笔

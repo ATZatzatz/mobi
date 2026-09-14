@@ -1,0 +1,14 @@
+# 统一换行符，避免 Windows 上每次提交都显示"整个文件都改了"
+* text=auto eol=lf
+
+# 批处理必须用 CRLF，否则 cmd 解析会出问题
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 二进制资源不参与换行符转换
+*.otf binary
+*.ttf binary
+*.woff2 binary
+*.ico binary
+*.png binary
+*.jpg binary

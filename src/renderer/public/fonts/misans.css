@@ -1,0 +1,32 @@
+/*
+ * MiSans（小米字体）字体声明。
+ *
+ * 字体文件随应用一起分发（同目录下的 .otf），不依赖用户机器上是否安装过 MiSans。
+ * 字重映射：400 = Regular，500 = Medium，700 = Bold。
+ * 用到的其它字重（600 等）由浏览器在 400/500/700 之间就近匹配，不会出现假粗体。
+ *
+ * MiSans 版权归北京小米移动软件有限公司所有，可免费商用。
+ */
+@font-face {
+  font-family: 'MiSans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('MiSans-Regular.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'MiSans';
+  font-style: normal;
+  font-weight: 500 600;
+  font-display: block;
+  src: url('MiSans-Medium.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'MiSans';
+  font-style: normal;
+  font-weight: 700 900;
+  font-display: block;
+  src: url('MiSans-Bold.otf') format('opentype');
+}

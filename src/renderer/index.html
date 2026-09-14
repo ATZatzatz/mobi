@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: file:; font-src 'self' data: file:; media-src 'self' file:; connect-src 'self' ws://localhost:* http://localhost:*; object-src 'none'; form-action 'none'"
+    />
+    <title>MobiWriter</title>
+    <link rel="stylesheet" href="/fonts/misans.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header id="topbar" class="topbar"></header>
+      <div id="banner-host" class="banner-host"></div>
+      <main id="workspace" class="workspace">
+        <aside id="sidebar" class="sidebar">
+          <div class="sidebar-head">
+            <span id="vault-name" class="vault-name">未打开文件夹</span>
+            <div class="sidebar-actions">
+              <button id="btn-expand-all" class="mini" type="button" title="一键展开整个文档库"></button>
+              <button id="btn-new-file" class="mini" type="button" title="新建文稿（Ctrl+N）"></button>
+              <button id="btn-new-folder" class="mini" type="button" title="新建文件夹（Ctrl+Shift+N）"></button>
+            </div>
+          </div>
+          <div id="tree-host" class="tree-host"></div>
+          <div id="results-host" class="search-results" hidden></div>
+        </aside>
+        <div id="splitter-left" class="splitter" role="separator" aria-orientation="vertical"></div>
+        <section id="editor-pane" class="editor-pane">
+          <div id="find-host" class="find-host"></div>
+          <div id="editor-host" class="editor-host"></div>
+          <div id="editor-placeholder" class="editor-placeholder">从左边选一篇文稿，或者新建一篇</div>
+        </section>
+        <section id="preview-pane" class="preview-pane">
+          <div id="preview-host" class="preview-host markdown-body"></div>
+        </section>
+      </main>
+      <footer id="statusbar" class="statusbar"></footer>
+      <div id="welcome" class="welcome"></div>
+      <div id="toast-host" class="toast-host" aria-live="polite"></div>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
